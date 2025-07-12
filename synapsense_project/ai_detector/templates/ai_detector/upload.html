@@ -4,8 +4,8 @@
     <title>SynapSense Live Input</title>
 </head>
 <body>
-
 <h1>Live Prediction from Mic and Camera</h1>
+
 {% if error %}
   <p style="color: red;">{{ error }}</p>
 {% endif %}
@@ -36,7 +36,7 @@
 <script>
 let mediaRecorder, audioChunks = [];
 
-// CAMERA
+// Camera
 navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
     document.getElementById('camera').srcObject = stream;
 });
@@ -57,7 +57,7 @@ function capturePhoto() {
     });
 }
 
-// MIC
+// Microphone
 function startRecording() {
     navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
         mediaRecorder = new MediaRecorder(stream);
@@ -78,7 +78,7 @@ function stopRecording() {
     mediaRecorder.stop();
 }
 
-// TYPING
+// Typing
 document.getElementById('typing').addEventListener('input', () => {
     document.getElementById('typing_input').value = document.getElementById('typing').value;
 });

@@ -1,35 +1,34 @@
-import random
+import os
+import joblib
+import numpy as np
 
-voice_predictions = [
-    ("Voice indicates early Parkinson’s signs", 0.85),
-    ("Voice shows signs of tremor instability", 0.81),
-    ("Speech irregularities consistent with Parkinson's", 0.83),
-    ("Voice pitch patterns suggest early dementia", 0.78),
-    ("Normal voice modulation detected", 0.92)
-]
+BASE_DIR = os.path.dirname(__file__)
+model_path = lambda name: os.path.join(BASE_DIR, 'models', name)
 
-face_predictions = [
-    ("Facial analysis suggests neurological fatigue", 0.79),
-    ("Eye movement irregularity detected", 0.76),
-    ("Facial muscle stiffness observed", 0.82),
-    ("Blink rate below normal range", 0.74),
-    ("No signs of facial motor issues", 0.91)
-]
+voice_model = joblib.load(model_path('voice_model.pkl'))
+voice_encoder = joblib.load(model_path('voice_encoder.pkl'))
 
-typing_predictions = [
-    ("Typing behavior shows possible motor issues", 0.82),
-    ("Key latency abnormal — possible early Parkinson's", 0.84),
-    ("Typing pattern matches healthy range", 0.90),
-    ("Inconsistent keypress durations observed", 0.77),
-    ("Typing rhythm suggests possible neurological disorder", 0.79)
-]
+typing_model = joblib.load(model_path('typing_model.pkl'))
+typing_encoder = joblib.load(model_path('typing_encoder.pkl'))
 
-def run_synapsense(voice_path=None, face_path=None, typing_data=None):
-    if voice_path:
-        return random.choice(voice_predictions)
-    elif face_path:
-        return random.choice(face_predictions)
-    elif typing_data:
-        return random.choice(typing_predictions)
+face_model = joblib.load(model_path('face_model.pkl'))
+face_encoder = joblib.load(model_path('face_encoder.pkl'))
+
+def run_synapsense(voice=None, face=None, typing=None):
+    if voice is not None:
+        pred = voice_model.predict([voice])[0]
+        label = voice_encoder.inverse_transform([pred])[0]
+        confidence = max(voice_model.predict_proba([voice])[0])
+        return f"Voice model: {label}", round(confidence * 100, 2)
+    elif face is not None:
+        pred = face_model.predict([face])[0]
+        label = face_encoder.inverse_transform([pred])[0]
+        confidence = max(face_model.predict_proba([face])[0])
+        return f"Face model: {label}", round(confidence * 100, 2)
+    elif typing is not None:
+        pred = typing_model.predict([typing])[0]
+        label = typing_encoder.inverse_transform([pred])[0]
+        confidence = max(typing_model.predict_proba([typing])[0])
+        return f"Typing model: {label}", round(confidence * 100, 2)
     else:
-        return "No valid input provided", 0.0
+        return "No valid input", 0.0
