@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SynapSense Live Input</title>
+</head>
+<body>
+
+<h1>Live Prediction from Mic and Camera</h1>
+{% if error %}
+  <p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<!-- Camera Preview -->
+<video id="camera" autoplay></video>
+<canvas id="snapshot" style="display:none;"></canvas>
+<br>
+<button onclick="capturePhoto()">📸 Capture Face</button>
+
+<!-- Mic Recorder -->
+<br><br>
+<button onclick="startRecording()">🎤 Start Recording</button>
+<button onclick="stopRecording()">⏹ Stop & Upload</button>
+
+<!-- Typing Behavior -->
+<br><br>
+<textarea name="typing_data" id="typing" rows="4" cols="50" placeholder="Type here to capture keystroke pattern..."></textarea>
+
+<form id="dataForm" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <input type="hidden" name="face_image" id="face_input">
+    <input type="hidden" name="voice_file" id="voice_input">
+    <input type="hidden" name="typing_data" id="typing_input">
+    <button type="submit">Analyze</button>
+</form>
+
+<script>
+let mediaRecorder, audioChunks = [];
+
+// CAMERA
+navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+    document.getElementById('camera').srcObject = stream;
+});
+
+function capturePhoto() {
+    const canvas = document.getElementById('snapshot');
+    const video = document.getElementById('camera');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    canvas.toBlob(blob => {
+        const file = new File([blob], 'face.png', { type: 'image/png' });
+        const reader = new FileReader();
+        reader.onload = () => {
+            document.getElementById('face_input').value = reader.result;
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// MIC
+function startRecording() {
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/wav' });
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                document.getElementById('voice_input').value = reader.result;
+            };
+            reader.readAsDataURL(blob);
+        };
+        mediaRecorder.start();
+    });
+}
+
+function stopRecording() {
+    mediaRecorder.stop();
+}
+
+// TYPING
+document.getElementById('typing').addEventListener('input', () => {
+    document.getElementById('typing_input').value = document.getElementById('typing').value;
+});
+</script>
+</body>
+</html>
